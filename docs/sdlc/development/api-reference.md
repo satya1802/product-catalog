@@ -7,7 +7,18 @@ _No routes found._
 <!-- sdlc:auto:end endpoints -->
 
 <!-- sdlc:auto:start drift -->
-_Code matches the designed API._
+**Designed but missing:**
+
+- DELETE /admin/products/{id}
+- DELETE /admin/products/{id}/images/{image_id}
+- GET /products
+- GET /products/{id}
+- GET /products/{id}/images/{image_id}
+- POST /admin/products
+- POST /admin/products/{id}/images
+- POST /auth/login
+- POST /auth/logout
+- PUT /admin/products/{id}
 <!-- sdlc:auto:end drift -->
 
 <!-- sdlc:auto:start source -->

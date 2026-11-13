@@ -2,6 +2,305 @@
 openapi: 3.1.0
 info:
   title: Product Catalog
-  version: architecture-v0
+  version: architecture-v1
   description: Designed API from the approved architecture (not extracted from code).
-paths: {}
+paths:
+  /admin/products:
+    post:
+      summary: Create a product with name, description, price and optional outbound
+        link plus one or more image files. Validates requir
+      description: Create a product with name, description, price and optional outbound
+        link plus one or more image files. Validates required fields and supported
+        image formats.
+      operationId: post_admin_products
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 'Multipart form: name, description, price, currency, outbound_link?,
+                files[]'
+      responses:
+        '200':
+          description: 201 { id } or 422 validation errors
+      security:
+      - bearerAuth: []
+  /admin/products/{id}:
+    put:
+      summary: Update product fields. Clearing a required field is rejected and previous
+        values are retained.
+      description: Update product fields. Clearing a required field is rejected and
+        previous values are retained.
+      operationId: put_admin_products_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{ name, description, price, currency, outbound_link? }'
+      responses:
+        '200':
+          description: 200 { id } or 422 validation errors
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Remove a product and its images so it disappears from list, search
+        and detail. SPA confirms before calling.
+      description: Remove a product and its images so it disappears from list, search
+        and detail. SPA confirms before calling.
+      operationId: delete_admin_products_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 204 No Content
+      security:
+      - bearerAuth: []
+  /admin/products/{id}/images:
+    post:
+      summary: Upload one or more additional images for a product; unsupported files
+        rejected with accepted formats.
+      description: Upload one or more additional images for a product; unsupported
+        files rejected with accepted formats.
+      operationId: post_admin_products_id_images
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 'Multipart form: files[]'
+      responses:
+        '200':
+          description: '201 { image_ids: [] } or 422'
+      security:
+      - bearerAuth: []
+  /admin/products/{id}/images/{image_id}:
+    delete:
+      summary: Remove a single image while retaining the product's remaining images.
+      description: Remove a single image while retaining the product's remaining images.
+      operationId: delete_admin_products_id_images_image_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: image_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 204 No Content
+      security:
+      - bearerAuth: []
+  /auth/login:
+    post:
+      summary: Verify admin credentials and create a server-side session. Returns
+        an opaque token in the body; generic error on failure
+      description: Verify admin credentials and create a server-side session. Returns
+        an opaque token in the body; generic error on failure.
+      operationId: post_auth_login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: '{ username, password }'
+      responses:
+        '200':
+          description: '{ token, expires_at } or 401 generic'
+  /auth/logout:
+    post:
+      summary: Revoke the current session token on the server so admin pages require
+        signing in again.
+      description: Revoke the current session token on the server so admin pages require
+        signing in again.
+      operationId: post_auth_logout
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 'Authorization: Bearer <token>'
+      responses:
+        '200':
+          description: 204 No Content
+      security:
+      - bearerAuth: []
+  /products:
+    get:
+      summary: Paginated product list with optional keyword search over name and description.
+        Empty catalog or no match returns an empt
+      description: Paginated product list with optional keyword search over name and
+        description. Empty catalog or no match returns an empty page the SPA renders
+        as a message.
+      operationId: get_products
+      parameters: []
+      responses:
+        '200':
+          description: '{ items: [{id, name, price, currency, primary_image_id}],
+            total, page, page_size }'
+  /products/{id}:
+    get:
+      summary: Full product detail including all image ids, price in single currency,
+        and optional outbound link.
+      description: Full product detail including all image ids, price in single currency,
+        and optional outbound link.
+      operationId: get_products_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '{ id, name, description, price, currency, outbound_link, image_ids:
+            [] }'
+  /products/{id}/images/{image_id}:
+    get:
+      summary: Streams the stored image binary with its content type for grid and
+        detail rendering.
+      description: Streams the stored image binary with its content type for grid
+        and detail rendering.
+      operationId: get_products_id_images_image_id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: image_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Binary image bytes with Content-Type header
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    products:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        outbound_link:
+          type: string
+        search_vector:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+      - price
+      - currency
+      - created_at
+      - updated_at
+    product_images:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        content_type:
+          type: string
+        filename:
+          type: string
+        sort_order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - product_id
+      - content
+      - content_type
+      - sort_order
+      - created_at
+    admin_users:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        password_hash:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - username
+      - password_hash
+      - created_at
+    admin_sessions:
+      type: object
+      properties:
+        token:
+          type: string
+        admin_user_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        last_active_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - token
+      - admin_user_id
+      - created_at
+      - last_active_at
+      - expires_at
